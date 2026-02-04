@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import pandas as pd
 import datetime
-import feedparser
 
 st.set_page_config(page_title="基金助手进阶版", layout="centered")
 st.title("📈 基金实时查询 + 业绩走势 + 新闻")
@@ -73,10 +72,23 @@ if st.button("查询"):
             st.write("暂无历史数据（免费接口限制）")
 
         # 新闻
-        st.write("📰 相关新闻（来自 Google News RSS）：")
-        news = get_news(data['name'])
+        st.write("📰 相关新闻（免费 Google News RSS）：")
+        news = get_news_rss(data['name'])
         for item in news:
             st.markdown(f"- [{item['title']}]({item['link']})")
 
 st.write("---")
 st.write("📌 提示：此页面使用免费数据抓取，数据更新可能延迟。")
+import requests
+import xml.etree.ElementTree as ET
+
+def get_news_rss(keyword="基金"):
+    url = f"https://news.google.com/rss/search?q={keyword}"
+    resp = requests.get(url)
+    root = ET.fromstring(resp.content)
+    news_items = []
+    for item in root.findall(".//item")[:10]:
+        title = item.find("title").text
+        link = item.find("link").text
+        news_items.append({"title": title, "link": link})
+    return news_items
